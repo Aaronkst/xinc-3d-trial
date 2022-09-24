@@ -1,46 +1,70 @@
 import * as THREE from "three";
 import * as React from "react";
-import { useRef, useState, useEffect } from "react";
-import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { useRef, useState, useEffect, Suspense } from "react";
+import {
+  Canvas,
+  ThreeEvent,
+  useThree,
+  useLoader,
+  useFrame,
+  MeshProps,
+} from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { PerspectiveCamera } from "@react-three/drei";
+import CharacterControls from "../modules/charcterControls";
 
-const Box = (props: JSX.IntrinsicElements["mesh"]) => {
-  // This reference will give us direct access to the THREE.Mesh object
-  const ref = useRef<THREE.Mesh>(null!);
-  // Hold state for hovered and clicked events
-  const [hovered, hover] = useState(false);
-  const [clicked, click] = useState(false);
-  // Rotate mesh every frame, this is outside of React without overhead
-  useFrame((state, delta) => (ref.current.rotation.x += 0.01));
+let characterControls: CharacterControls;
+
+const Soldier = (props: MeshProps) => {
+  const gltf = useLoader(GLTFLoader, "../assets/models/Soldier.glb");
+  const model = gltf.scene;
+  model.traverse((layer: any) => {
+    if (!!layer.isMesh) layer.castShadow = true;
+  });
+
+  const gltfAnimations: THREE.AnimationClip[] = gltf.animations;
+  const mixer = new THREE.AnimationMixer(model);
+  const animationsMap: Map<string, THREE.AnimationAction> = new Map();
+  gltfAnimations
+    .filter((a) => a.name !== "TPose")
+    .forEach((a: THREE.AnimationClip) => {
+      animationsMap.set(a.name, mixer.clipAction(a));
+    });
+
+  characterControls = new CharacterControls(
+    model,
+    mixer,
+    animationsMap,
+    "Idle"
+  );
+
+  useFrame((state, delta) => {
+    characterControls.mixer.update(delta);
+  });
 
   return (
-    <mesh
-      {...props}
-      ref={ref}
-      scale={clicked ? 1.5 : 1}
-      onClick={(event) => click(!clicked)}
-      onPointerOver={(event) => hover(true)}
-      onPointerOut={(event) => hover(false)}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? "hotpink" : "orange"} />
-    </mesh>
+    <Suspense fallback={null}>
+      <primitive {...props} object={model} />
+    </Suspense>
   );
 };
 
-const Floor = (props: JSX.IntrinsicElements["mesh"]) => {
+const Floor = (props: MeshProps) => {
   const ref = useRef<THREE.Mesh>(null!);
 
   useEffect(() => {
-    ref.current.rotateX(1.5);
+    ref.current.rotateX(Math.PI / 2);
   }, []);
 
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {};
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    console.log(e);
+    characterControls.move(e.point);
+  };
 
   return (
-    <mesh {...props} ref={ref} onClick={(event) => console.log(event)}>
-      <planeGeometry args={[64, 64]} />
+    <mesh {...props} ref={ref} onClick={handleClick} receiveShadow={true}>
+      <planeGeometry args={[32, 32]} />
       <meshStandardMaterial color={0x00ffff} side={THREE.DoubleSide} />
     </mesh>
   );
@@ -56,7 +80,7 @@ const Controls = () => {
     controls.maxDistance = 20;
 
     //maximum rotating height
-    controls.minPolarAngle = 1;
+    //controls.minPolarAngle = 1;
     controls.maxPolarAngle = Math.PI / 2;
 
     return () => {
@@ -70,11 +94,21 @@ const Controls = () => {
 const App = () => {
   return (
     <section>
-      <Canvas>
-        <PerspectiveCamera />
+      <Canvas shadows={true}>
         <Controls />
-        <pointLight position={[10, 10, 10]} />
-        <ambientLight intensity={0.5} />
+        <PerspectiveCamera fov={90} />
+        <group>
+          {
+            <directionalLight
+              castShadow={true}
+              color={0xffffff}
+              position={[0, 0, 3]}
+            />
+          }
+          <ambientLight intensity={0.8} color={0xffffff} />
+        </group>
+        <directionalLight castShadow={true} color={0xaaaaaa} />
+        <Soldier position={[0, -1.5, 0]} />
         <Floor position={[0, -1.5, 0]} />
       </Canvas>
     </section>
