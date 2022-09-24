@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import * as React from "react";
-import { useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef, useState, useEffect } from "react";
+import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { PerspectiveCamera } from "@react-three/drei";
 
-function Box(props: JSX.IntrinsicElements["mesh"]) {
+const Box = (props: JSX.IntrinsicElements["mesh"]) => {
   // This reference will give us direct access to the THREE.Mesh object
   const ref = useRef<THREE.Mesh>(null!);
   // Hold state for hovered and clicked events
@@ -25,16 +27,58 @@ function Box(props: JSX.IntrinsicElements["mesh"]) {
       <meshStandardMaterial color={hovered ? "hotpink" : "orange"} />
     </mesh>
   );
-}
+};
 
-export default function App() {
+const Floor = (props: JSX.IntrinsicElements["mesh"]) => {
+  const ref = useRef<THREE.Mesh>(null!);
+
+  useEffect(() => {
+    ref.current.rotateX(1.5);
+  }, []);
+
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {};
+
   return (
-    <Canvas>
-      <ambientLight intensity={0.5} />
-      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-      <pointLight position={[-10, -10, -10]} />
-      <Box position={[-1.2, 0, 0]} />
-      <Box position={[1.2, 0, 0]} />
-    </Canvas>
+    <mesh {...props} ref={ref} onClick={(event) => console.log(event)}>
+      <planeGeometry args={[64, 64]} />
+      <meshStandardMaterial color={0x00ffff} side={THREE.DoubleSide} />
+    </mesh>
   );
-}
+};
+
+const Controls = () => {
+  const { camera, gl } = useThree();
+  useEffect(() => {
+    const controls = new OrbitControls(camera, gl.domElement);
+
+    //maximum scroll
+    controls.minDistance = 3;
+    controls.maxDistance = 20;
+
+    //maximum rotating height
+    controls.minPolarAngle = 1;
+    controls.maxPolarAngle = Math.PI / 2;
+
+    return () => {
+      controls.dispose();
+    };
+  }, [camera, gl]);
+
+  return null;
+};
+
+const App = () => {
+  return (
+    <section>
+      <Canvas>
+        <PerspectiveCamera />
+        <Controls />
+        <pointLight position={[10, 10, 10]} />
+        <ambientLight intensity={0.5} />
+        <Floor position={[0, -1.5, 0]} />
+      </Canvas>
+    </section>
+  );
+};
+
+export default App;
