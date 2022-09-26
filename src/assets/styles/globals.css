@@ -26,6 +26,25 @@ section {
   position: absolute;
 }
 
+p {
+  position: absolute;
+  z-index: 10;
+  top: 2rem;
+  right: 2rem;
+  padding: 1rem;
+  outline: none;
+  border: none;
+  background: white;
+  border-radius: 5px;
+  box-shadow: #000;
+  margin: 0;
+}
+
+span {
+  display: block;
+  margin-bottom: .3rem;
+}
+
 button {
   position: absolute;
   z-index: 10;

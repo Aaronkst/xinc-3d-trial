@@ -1,6 +1,7 @@
 import * as THREE from "three";
-import * as React from "react";
-import { useRef, useState, useEffect, Suspense } from "react";
+import * as TWEEN from "@tweenjs/tween.js";
+
+import { useRef, useEffect, Suspense } from "react";
 import {
   Canvas,
   ThreeEvent,
@@ -11,7 +12,7 @@ import {
 } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { PerspectiveCamera } from "@react-three/drei";
+import { TextureLoader } from "three/src/loaders/TextureLoader";
 import CharacterControls from "../modules/charcterControls";
 
 let characterControls: CharacterControls;
@@ -51,6 +52,7 @@ const Soldier = (props: MeshProps) => {
 };
 
 const Floor = (props: MeshProps) => {
+  const moonTexture = useLoader(TextureLoader, "../assets/textures/moon.jpg");
   const ref = useRef<THREE.Mesh>(null!);
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
@@ -66,7 +68,7 @@ const Floor = (props: MeshProps) => {
       receiveShadow={true}
     >
       <planeGeometry args={[32, 32]} />
-      <meshStandardMaterial color={0x00ffff} side={THREE.DoubleSide} />
+      <meshStandardMaterial map={moonTexture} side={THREE.DoubleSide} />
     </mesh>
   );
 };
@@ -75,14 +77,18 @@ const Controls = () => {
   const { camera, gl } = useThree();
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
-
     //maximum scroll
-    controls.minDistance = 3;
-    controls.maxDistance = 20;
+    controls.minDistance = 5;
+    controls.maxDistance = 10;
 
     //maximum rotating height
     //controls.minPolarAngle = 1;
     controls.maxPolarAngle = Math.PI / 2;
+
+    controls.mouseButtons = {
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.ROTATE,
+    };
 
     return () => {
       controls.dispose();
@@ -93,12 +99,24 @@ const Controls = () => {
 };
 
 const App = () => {
+  useEffect(() => {
+    const animate = (time: number) => {
+      requestAnimationFrame(animate);
+      TWEEN.update(time);
+    };
+    requestAnimationFrame(animate);
+  }, []);
+
   return (
     <section>
-      <button onClick={(e) => characterControls.reset()}>Reset Position</button>
-      <Canvas shadows={true}>
+      <button onClick={() => characterControls.reset()}>Reset Position</button>
+      <p>
+        <span>Right Click: Rotate</span>
+        <span>Left Click: Move</span>
+        <span>Middle Mouse: Zoom</span>
+      </p>
+      <Canvas shadows={true} camera={{ position: [0, 5, 5] }}>
         <Controls />
-        <PerspectiveCamera fov={90} />
         <group>
           {
             <directionalLight

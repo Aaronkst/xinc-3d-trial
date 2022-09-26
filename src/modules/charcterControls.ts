@@ -1,18 +1,14 @@
 import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 
-const animate = (time: number) => {
-  requestAnimationFrame(animate);
-  TWEEN.update(time);
-};
-requestAnimationFrame(animate);
 export default class CharacterControls {
   model: THREE.Group;
   mixer: THREE.AnimationMixer;
   animationsMap: Map<string, THREE.AnimationAction> = new Map(); //Walk, Run, Idle
-  currentAnimation: THREE.AnimationAction | undefined;
+  currentAnimation?: THREE.AnimationAction;
   movement?: TWEEN.Tween<THREE.Vector3>;
   velocity: number;
+  default = true;
 
   constructor(
     model: THREE.Group,
@@ -47,6 +43,7 @@ export default class CharacterControls {
   }
 
   public move(point: THREE.Vector3) {
+    this.default = false;
     this.movement?.stop();
     this.model.lookAt(point);
     this.model.rotateY(Math.PI);
