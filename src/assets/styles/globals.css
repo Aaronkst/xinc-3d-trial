@@ -25,3 +25,22 @@ section {
   height: 100vh;
   position: absolute;
 }
+
+button {
+  position: absolute;
+  z-index: 10;
+  top: 2rem;
+  left: 2rem;
+  padding: 1rem;
+  outline: none;
+  border: none;
+  background: #440088;
+  color: white;
+  border-radius: 5px;
+  box-shadow: #000;
+}
+
+button:hover {
+  cursor: pointer;
+  background-color: #330077;
+}

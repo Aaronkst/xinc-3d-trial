@@ -53,17 +53,18 @@ const Soldier = (props: MeshProps) => {
 const Floor = (props: MeshProps) => {
   const ref = useRef<THREE.Mesh>(null!);
 
-  useEffect(() => {
-    ref.current.rotateX(Math.PI / 2);
-  }, []);
-
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    console.log(e);
     characterControls.move(e.point);
   };
 
   return (
-    <mesh {...props} ref={ref} onClick={handleClick} receiveShadow={true}>
+    <mesh
+      {...props}
+      ref={ref}
+      rotation={new THREE.Euler(Math.PI / 2, 0, 0, "XYZ")}
+      onClick={handleClick}
+      receiveShadow={true}
+    >
       <planeGeometry args={[32, 32]} />
       <meshStandardMaterial color={0x00ffff} side={THREE.DoubleSide} />
     </mesh>
@@ -94,6 +95,7 @@ const Controls = () => {
 const App = () => {
   return (
     <section>
+      <button onClick={(e) => characterControls.reset()}>Reset Position</button>
       <Canvas shadows={true}>
         <Controls />
         <PerspectiveCamera fov={90} />
